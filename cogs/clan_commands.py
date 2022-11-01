@@ -2,7 +2,8 @@ import nextcord
 from nextcord.ext import commands
 import random
 import motor.motor_asyncio as mator
-from ..dotenv import mongo as MONGO
+from dotenv import mongo as MONGO
+
 connection = mator.AsyncIOMotorClient(MONGO)
 mogo = connection['JTF']
 
@@ -15,8 +16,9 @@ class CCommands(commands.Cog):
         clan_id = random.randint(1000000,99999999)
         clan_role = await interaction.guild.create_role(name=clan_name)
         clanboss_data = await mogo.infousers.find_one({'member_id':interaction.user.id})
+        print(clanboss_data)
         if clanboss_data != None:
-            if clanboss_data['money'] > 1:
+            if clanboss_data['money'] > 100:
                 await mogo.clans.insert_one( {
                         'guild_id': interaction.guild.id,
                         'owner_id': interaction.user.id,
@@ -31,11 +33,12 @@ class CCommands(commands.Cog):
                         }           
                     )
                 new_money = clanboss_data['money'] - 1
-                await mogo.infousers.update_one({'money':new_money})
-                await interaction.response.send_message(f'Клан создан. Клан айди {clan_id}')
+                await mogo.infousers.update_one(clanboss_data,{'$set':{'money':new_money}})
+                await interaction.response.send_message(f'Клан создан. Клан айди {clan_id}\nС вашего счета списано 100 шекелей')
             else:
                 await interaction.response.send_message(f'Malo denyak dlya etogo{clan_id}')
-        await interaction.response.send_message(f'Что то пошло не так')
+        else:
+            await interaction.response.send_message(f'Что то пошло не так')
 
 
     @nextcord.slash_command(name='clan_delete', description='Удоление клана на сервербе')
@@ -113,12 +116,12 @@ class CCommands(commands.Cog):
     
     @nextcord.slash_command(name='clan_send_money', description='закинуть деняк в клан')
     async def send_money(self, interaction: nextcord.Interaction, how_much: int, clan_id: int):
-        user_data = await mongo.infousers.find_one({'member_id': interaction.user.id})
-        if user_data[money] >= how_much:
+        user_data = await mogo.infousers.find_one({'member_id': interaction.user.id})
+        if user_data['money'] >= how_much:
             clan = await mogo.clans.find_one({'clan_id':clan_id})
             if clan != None:
                 new_data = clan.copy()
-                new_data['cash_clan'] += a
+                new_data['cash_clan'] += how_much
                 await mogo.clans.update_one(clan, {'$set': new_data})
                 await interaction.response.send_message(f'Готово')
             else:
