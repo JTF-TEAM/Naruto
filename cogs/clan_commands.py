@@ -2,7 +2,8 @@ import nextcord
 from nextcord.ext import commands
 import random
 import motor.motor_asyncio as mator
-from dotenv import mongo as MONGO
+
+MONGO = 'mongodb+srv://ASD123:ASD123@cluster0.nfyepgf.mongodb.net/?retryWrites=true&w=majority'
 
 connection = mator.AsyncIOMotorClient(MONGO)
 mogo = connection['JTF']
@@ -110,20 +111,27 @@ class CCommands(commands.Cog):
             await interaction.response.send_message("Клан не найден...")
 
     class waitforjoin(nextcord.ui.View):
-        def __init__(self):
+        def __init__(self, targer):
             super().__init__(timeout=60*5)
+            self.is_dat_nigga_is_my_nigga = targer
             self.value = None
 
 
         @nextcord.ui.button(label='вступить')
         async def join(self, button: nextcord.ui.Button, interaction):
-            self.value = True
-            self.stop()
+            if interaction.user == self.is_dat_nigga_is_my_nigga:
+                self.value = True
+                self.stop()
+            else:
+                await interaction.channel.send(f'{interaction.user.mention} это не для тебя', delete_after=2)
         
         @nextcord.ui.button(label='отказаться')
         async def nenihuja(self, button: nextcord.ui.Button, interaction):
-            self.value = False
-            self.stop()
+            if interaction.user == self.is_dat_nigga_is_my_nigga:
+                self.value = False
+                self.stop()
+            else:
+                await interaction.channel.send(f'{interaction.user.mention} это не для тебя', delete_after=2)
 
     @nextcord.slash_command(name='clan_add_member', description='добавление микрочелика в клан')
     async def add_member(self, interaction: nextcord.Interaction, member: nextcord.Member, clan_id: int):
@@ -141,7 +149,7 @@ class CCommands(commands.Cog):
                     if member.id in clan['member']:
                         await interaction.response.send_message('чел уже в клане')
                     else:
-                        baton = self.waitforjoin()
+                        baton = self.waitforjoin(member)
             
                         msg = await interaction.response.send_message(
                             content=member.mention,
@@ -256,15 +264,51 @@ class CCommands(commands.Cog):
                 await interaction.response.send_message(" Мало денег...")
         else:
             await interaction.response.send_message('ахахаха, чел....')
+
+
+
+    @nextcord.slash_command(name='clan_get_bablishko', description='zaliv roley')
+    async def sdffadfgadfgag(self, interaction: nextcord.Interaction, clan_id: int, member:nextcord.Member, hawmach: int):
+        clan = await mogo.clans.find_one({'clan_id':clan_id})
+        if clan != None and interaction.user.id == clan['owner_id'] and hawmach  > 0:
+            new_data = clan.copy()
+            new_data['cash_clan'] -= hawmach
+            await mogo.clans.update_one({'clan_id':clan_id}, {'$set': new_data})
+            memberanium = await mogo.infousers.find_one({'member_id':member.id})
+            new_data = memberanium.copy()
+            new_data['money'] += hawmach
+            await mogo.clans.update_one({'member_id':member.id}, {'$set': new_data})
+            await interaction.response.send_message('rabotoet')
+        else:
+            await interaction.response.send_message('ne nihuya')
         
+
+        
+
+    @nextcord.slash_command(name='clan_shop_addrole', description='zaliv roley')
+    async def clan_shop_add(self, interaction: nextcord.Interaction, clan_id: int, role_id:int):
+        clan = await mogo.clans.find_one({'clan_id':clan_id})
+        if clan != None and interaction.user.id == clan['owner_id']:
+            new_data = clan.copy()
+            new_data['cash_clan'].append(role_id)
+            await mogo.clans.update_one({'clan_id':clan_id}, {'$set': new_data})
+            await interaction.response.send_message('da')
+        else:
+            await interaction.response.send_message('nihuya')
+        pass
+
+
     @nextcord.slash_command(name='clan_shop', description='magaz klana')
     async def clan_shop(self, interaction: nextcord.Interaction, clan_id: int):
         clan = await mogo.clans.find_one({'clan_id':clan_id})
         if clan != None:
+            roles_streng = ''
+            for role_id in clan['clan_shop']:
+                roles_streng += f"<@&{role_id}>\n"
             await interaction.response.send_message(
                 embed=nextcord.Embed(
-                    title='MAGAZ',
-                    description= str(role+'\n' for role in clan['clan_shop'])
+                    title=f"{clan['clan_name']} магазинчик 😍",
+                    description= roles_streng
                 )
             )
         else:
@@ -276,7 +320,7 @@ class CCommands(commands.Cog):
         clan = await mogo.clans.find_one({'clan_id':clan_id})
         if clan != None:
             E = nextcord.Embed(
-                title = f"{clan['clan_name']} clan",
+                title = f"{clan['clan_name']}",
                 description=f"Владелец: <@{clan['owner_id']}>\nДенег накоплено: {clan['cash_clan']}\nКол-во участников: {len(clan['member'])}"
             )
 
