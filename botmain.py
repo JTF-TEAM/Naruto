@@ -2,7 +2,7 @@
 import os
 import nextcord
 from nextcord.ext import  commands
-from dotenv import token, mongo #(dotenv.py -> token:str, mongo:str)
+from dotenv import token #(dotenv.py -> token:str, mongo:str)
 
 intents = nextcord.Intents.all()
 bot = commands.Bot(intents=intents)

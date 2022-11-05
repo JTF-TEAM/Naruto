@@ -1,5 +1,4 @@
 # Byte-compiled / optimized / DLL files
-dotenv.py
 test_.py
 __pycache__/
 *.py[cod]
